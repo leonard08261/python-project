@@ -1,0 +1,89 @@
+def main():
+    import requests
+    import pandas as pd
+    from fredapi import Fred
+    import discord
+    import matplotlib.pyplot as plt
+
+    # 設置您的API金鑰
+    apikey = 'd2c953ab2778b591fdfb3a3e1ee250bb'
+    fred = Fred(api_key=apikey)
+
+    # 設置API endpoint
+    url = "https://api.stlouisfed.org/fred/series/search"
+
+
+    # 讓使用者輸入起始日期和結束日期
+    start_date = input('請輸入起始日期（例如：1947-01-01）：')
+    end_date = input('請輸入結束日期（例如：2023-01-01）：')
+
+    # 讓使用者輸入想查詢的關鍵詞
+    text = input('想查詢的大致方向(英文)如有確切名字請直接按enter:')
+
+    # 如果使用者輸入了想查詢的關鍵詞，就執行search功能
+    if text:
+        # 設置查詢參數
+        params = {
+            'search_text': text,
+            'api_key': apikey,
+            'file_type': 'json',
+            'realtime_start': start_date,
+            'realtime_end': end_date
+        }
+
+        # 發送API請求
+        response = requests.get(url, params=params)
+
+        # 解析API回應
+        data = response.json()
+        series_data = data['seriess']
+
+        # 將數據轉換為Pandas DataFrame
+        df = pd.json_normalize(series_data)
+        df = df.drop(columns=['realtime_start','realtime_end','frequency_short','notes','popularity','units_short','group_popularity','seasonal_adjustment'],axis= 0)
+        print(df.head(10))
+
+        # 讓使用者輸入想查詢的經濟數據代碼
+        while True:
+            indicator = input('請輸入您要查詢的經濟數據代碼：')
+            if indicator:
+                break
+            else:
+                print("請重新輸入")
+                continue
+        # 獲取指定指標數據
+        data = fred.get_series(indicator, start_date=start_date, end_date=end_date)
+
+        # 將數據轉換為Pandas DataFrame
+        df = pd.DataFrame(data, columns=[indicator])
+
+        # 打印數據
+        print(df.tail(10))
+        df.plot()
+        plt.title(indicator)
+        plt.xlabel('Date')
+        plt.ylabel('Value')
+        plt.show()
+    else:
+        # 讓使用者輸入想查詢的經濟數據代碼
+        while True:
+            indicator = input('請輸入您要查詢的經濟數據代碼：')
+            if indicator:
+                break
+            else:
+                print("請重新輸入")
+                continue
+            # 獲取指定指標數據
+        data = fred.get_series(indicator, start_date=start_date, end_date=end_date)
+
+            # 將數據轉換為Pandas DataFrame
+        df = pd.DataFrame(data, columns=[indicator])
+
+            # 打印數據
+        print(df.tail(10))
+        df.plot()
+        plt.title(indicator)
+        plt.xlabel('Date')
+        plt.ylabel('Value')
+        plt.show()
+main()
